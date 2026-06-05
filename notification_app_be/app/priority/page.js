@@ -18,19 +18,15 @@ export default function PriorityInbox() {
   
   const { isViewed, markAsViewed } = useViewedNotifications();
 
+  const [allFetchedData, setAllFetchedData] = useState([]);
+
+  // Fetch from network only when filter changes
   useEffect(() => {
-    const loadAndProcessNotifications = async () => {
+    const fetchAllData = async () => {
       setLoading(true);
       try {
-        // Fetch a large pool of notifications to process priority correctly.
-        // If the API supports true priority sorting, we'd pass limit=topN. 
-        // For fallback safety, we fetch without limit and sort locally.
         const data = await fetchNotifications({ type: filterType });
-        
-        // Use the Min-Heap logic to extract Top N Unread
-        const topPriority = getTopNNotifications(data, topN, isViewed);
-        
-        setNotifications(topPriority);
+        setAllFetchedData(data);
         setError(null);
       } catch (err) {
         setError('Failed to load priority notifications.');
@@ -39,8 +35,14 @@ export default function PriorityInbox() {
       }
     };
 
-    loadAndProcessNotifications();
-  }, [topN, filterType, isViewed]);
+    fetchAllData();
+  }, [filterType]);
+
+  // Recalculate top N locally whenever data, N, or view status changes
+  useEffect(() => {
+    const topPriority = getTopNNotifications(allFetchedData, topN, isViewed);
+    setNotifications(topPriority);
+  }, [allFetchedData, topN, isViewed]);
 
   return (
     <Box>
