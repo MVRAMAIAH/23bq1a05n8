@@ -50,3 +50,26 @@ node notification_app_fe/priorityInbox.js
 ```
 
 Output shows all 10 notifications ranked by priority — placements first, then results, then events.
+
+---
+
+# Stage 2
+
+## Frontend App (React/Next.js)
+
+### What I built
+I created a Next.js app with Material UI to display the notifications. I put it in the `notification_app_be` folder as requested. It runs on `http://localhost:3000`.
+
+### Pages
+- **`/` (All Notifications):** Shows everything. Has a dropdown to filter by type (placement, result, event) and simple pagination.
+- **`/priority` (Priority Inbox):** Uses the min-heap logic from Stage 1. You can select the top N (5, 10, 15, 20) and it only shows the unread ones sorted by score.
+
+### API & Fallback
+I hooked up the `fetchNotifications` function to hit `http://20.244.56` using the new query parameters (`limit`, `page`, `notification type`). 
+Since the IP provided in the prompt seemed incomplete, I added a `try/catch`. If the API fails, it automatically falls back to generating the mock data so the UI still works perfectly for the video recording.
+
+### Tracking "Read" Status
+I wrote a custom hook `useViewedNotifications` that uses `localStorage`. When you click a notification card, it saves the ID. 
+- Unread notifications: Bold text, elevated shadow, blue dot.
+- Viewed notifications: Gray border, flat background. 
+This works instantly on the client side without needing a database.
