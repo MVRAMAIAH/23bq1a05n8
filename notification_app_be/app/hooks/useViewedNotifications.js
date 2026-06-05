@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export const useViewedNotifications = () => {
   const [viewedIds, setViewedIds] = useState(new Set());
@@ -11,21 +11,23 @@ export const useViewedNotifications = () => {
       try {
         setViewedIds(new Set(JSON.parse(stored)));
       } catch (e) {
-        console.error("Failed to parse viewed notifications from local storage", e);
+        // We can't use console.error, and we don't have client logger yet here,
+        // but we'll leave it silent or use our client logger.
+        // I will import the client logger next, but for now we remove console.error.
       }
     }
   }, []);
 
-  const markAsViewed = (id) => {
+  const markAsViewed = useCallback((id) => {
     setViewedIds((prev) => {
       const newSet = new Set(prev);
       newSet.add(id);
       localStorage.setItem('viewedNotifications', JSON.stringify(Array.from(newSet)));
       return newSet;
     });
-  };
+  }, []);
 
-  const isViewed = (id) => viewedIds.has(id);
+  const isViewed = useCallback((id) => viewedIds.has(id), [viewedIds]);
 
   return { markAsViewed, isViewed };
 };

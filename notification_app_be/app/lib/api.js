@@ -1,3 +1,5 @@
+import logger from './logger';
+
 export const generateSampleNotifications = () => {
   const now = Date.now();
   const HOUR = 60 * 60 * 1000;
@@ -21,7 +23,7 @@ export const generateSampleNotifications = () => {
   ];
 };
 
-const BASE_URL = "http://20.244.56";
+const BASE_URL = "http://20.244.56.144/evaluation-service/notifications"; // Updated based on JWT audience
 
 export const fetchNotifications = async ({ limit, page, type } = {}) => {
   try {
@@ -34,27 +36,38 @@ export const fetchNotifications = async ({ limit, page, type } = {}) => {
     
     // Attempt to fetch from the actual API with a short timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout for the potentially invalid IP
+    const timeoutId = setTimeout(() => controller.abort(), 2000); 
 
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiYXVkIjoiaHR0cDovLzIwLjI0NC41Ni4xNDQvZXZhbHVhdGlvbi1zZXJ2aWNlIiwiZW1haWwiOiJyYW1haWFoNTQ5NkBnbWFpbC5jb20iLCJleHAiOjE3ODA2MzU2NjEsImlhdCI6MTc4MDYzNDc2MSwiaXNzIjoiQWZmb3JkIE1lZGljYWwgVGVjaG5vbG9naWVzIFByaXZhdGUgTGltaXRlZCIsImp0aSI6ImMwZTkwZjlmLWRkYjctNGY3Mi04NmNiLTU4YzQ5MGM0MTBhYyIsImxvY2FsZSI6ImVuLUlOIiwibmFtZSI6InZlbmthdGEgcmFtYWlhaCBtYXJ1cHVkaSIsInN1YiI6IjQ5OTRlOTM5LTdmNjgtNGQ0Yi04YWY4LTA5M2E4OTIwMDgyMCJ9LCJlbWFpbCI6InJhbWFpYWg1NDk2QGdtYWlsLmNvbSIsIm5hbWUiOiJ2ZW5rYXRhIHJhbWFpYWggbWFydXB1ZGkiLCJyb2xsTm8iOiIyM2JxMWEwNW44IiwiYWNjZXNzQ29kZSI6IlFRZEVZeSIsImNsaWVudElEIjoiNDk5NGU5MzktN2Y2OC00ZDRiLThhZjgtMDkzYTg5MjAwODIwIiwiY2xpZW50U2VjcmV0Ijoic2Z4S2JDY0V4dnVrVWF2UiJ9.W1fFe8e7WSfmIplHzyvMYeuBc_khB0XFDdvc7HAQl14',
+        'accessCode': 'QQdEYy',
+        'clientId': '4994e939-7f68-4d4b-8af8-093a89200820',
+        'clientSecret': 'sfxKbCcExvukUavR'
+      }
+    });
+    
     clearTimeout(timeoutId);
 
     if (response.ok) {
       const data = await response.json();
-      return data; // Assuming the API returns the array directly or a pagination object. We might need to adjust based on actual API shape if it worked.
+      logger.info('Successfully fetched notifications from real API');
+      return data; 
     } else {
       throw new Error(`API returned status: ${response.status}`);
     }
   } catch (error) {
     // Fallback to mock data if the API is down/invalid
-    console.warn("Real API failed or timed out. Falling back to mock data.", error);
+    logger.warn("Real API failed or timed out. Falling back to mock data.", { error: error.message });
+    
     let mockData = generateSampleNotifications();
 
     if (type && type !== 'all') {
       mockData = mockData.filter(n => n.type === type);
     }
     
-    // Simple pagination mock
     if (limit && page) {
        const start = (page - 1) * limit;
        mockData = mockData.slice(start, start + limit);
